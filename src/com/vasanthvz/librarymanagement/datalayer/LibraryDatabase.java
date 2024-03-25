@@ -1,23 +1,35 @@
 package com.vasanthvz.librarymanagement.datalayer;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.vasanthvz.librarymanagement.model.Book;
 import com.vasanthvz.librarymanagement.model.Library;
 import com.vasanthvz.librarymanagement.model.User;
+import com.vasanthvz.librarymanagement.model.UserBook;
 
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.Reader;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LibraryDatabase {
     private static LibraryDatabase libraryDatabase;
+    private static Gson gson;
     private static int bookCounter = 1000;
     private static int userCounter = 100;
     private Library library;
-    private static final List<Book> bookList = new ArrayList<>();
-    private static final List<User> userList = new ArrayList<>();
+    private static List<Book> bookList = new ArrayList<>();
+    private static List<User> userList = new ArrayList<>();
     private static HashMap<User,List<Book>> userBookMap;
     public static LibraryDatabase getInstance(){
         if(libraryDatabase == null){
             libraryDatabase = new LibraryDatabase();
+        }
+        if(gson == null){
+            gson = new Gson();
         }
         if(userBookMap==null){
             userBookMap = new HashMap<>();
@@ -26,6 +38,79 @@ public class LibraryDatabase {
     }
     public Library getLibrary(){
         return library;
+    }
+
+    public void loadData(){
+        String json = readData("books");
+        Type listType = new TypeToken<List<Book>>(){}.getType();
+        bookList = gson.fromJson(json, listType);
+        json = readData("users");
+        listType = new TypeToken<List<User>>(){}.getType();
+        userList = gson.fromJson(json,listType);
+        fromJson();
+
+    }
+
+    private String readData(String name){
+        String json = "";
+        try (Reader reader = new FileReader("data/"+name+".json")) {
+            // Create a buffer to read the file content
+            StringBuilder stringBuilder = new StringBuilder();
+            int c;
+            while ((c = reader.read()) != -1) {
+                stringBuilder.append((char) c);
+            }
+            json = stringBuilder.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+
+    public String mapToJson() {
+        Gson gson = new Gson();
+        List<UserBook> userBooks = new ArrayList<>();
+        for (Map.Entry<User, List<Book>> entry : userBookMap.entrySet()) {
+            UserBook userBook = new UserBook();
+            userBook.setUser(entry.getKey());
+            userBook.setBooks(entry.getValue());
+            userBooks.add(userBook);
+        }
+        return gson.toJson(userBooks);
+    }
+
+    public void fromJson() {
+        String json = readData("bookUserMap");
+        Type type = new TypeToken<List<UserBook>>(){}.getType();
+        List<UserBook> userBooks = gson.fromJson(json, type);
+        if(userBooks==null){
+            return;
+        }
+        for (UserBook userBook : userBooks) {
+            userBookMap.put(userBook.getUser(), userBook.getBooks());
+        }
+    }
+
+    public void saveData(){
+        String json = gson.toJson(bookList);
+        writeJson(json,"books");
+        json = gson.toJson(userList);
+        writeJson(json,"users");
+        json = mapToJson();
+        writeJson(json,"bookUserMap");
+    }
+
+
+    public void writeJson(String json,String name){
+        try (FileWriter writer = new FileWriter("data/"+name+".json")) {
+            writer.write(json);
+            writer.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void setLibrary(Library library){
+        this.library = library;
     }
     public Library insertLibrary(Library library2){
         this.library = library2;
@@ -48,13 +133,7 @@ public class LibraryDatabase {
         }
         return null;
     }
-    public boolean isBookAvailable(int bookId){
-        Book book = getBook(bookId);
-        if(book==null){
-            return false;
-        }
-        return book.getCount() > 0;
-    }
+
 
 
     public boolean issueBookToUser(int userId,int bookId){

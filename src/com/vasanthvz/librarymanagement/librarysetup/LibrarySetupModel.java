@@ -5,11 +5,10 @@ import com.vasanthvz.librarymanagement.datalayer.LibraryDatabase;
 import com.vasanthvz.librarymanagement.model.Library;
 
 public class LibrarySetupModel extends Model {
-    private final LibrarySetupView librarySetupView;
-    Library library;
+    private LibrarySetupView librarySetupView;
+    Library library= LibraryDatabase.getInstance().getLibrary();
     LibrarySetupModel(LibrarySetupView librarySetupView) {
         this.librarySetupView = librarySetupView;
-        this.library = LibraryDatabase.getInstance().getLibrary();
     }
     public void startSetup(){
         if(library==null){
@@ -21,9 +20,10 @@ public class LibrarySetupModel extends Model {
 
     public void createLibrary(String libraryName, String emailId) {
         if(isValidName(libraryName) && isValidEmail(emailId)){
-            library = new Library();
+            this.library = new Library();
             this.library.setLibraryName(libraryName);
             this.library.setEmailId(emailId);
+            LibraryDatabase.getInstance().setLibrary(library);
             librarySetupView.onSetupComplete();
         }else if(isValidName(libraryName)){
             librarySetupView.showAlert("Invalid Email");

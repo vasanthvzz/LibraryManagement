@@ -1,5 +1,7 @@
 package com.vasanthvz.librarymanagement.librarymenu;
 
+import com.vasanthvz.librarymanagement.datalayer.LibraryDatabase;
+
 public class LibraryMenuModel {
     private final LibraryMenuView libraryMenuView;
     public LibraryMenuModel(LibraryMenuView libraryMenuView) {
@@ -21,6 +23,11 @@ public class LibraryMenuModel {
                 break;
             }
             case "4":{
+                LibraryDatabase.getInstance().saveData();
+                libraryMenuView.showLibraryMenu();
+                break;
+            }
+            case "5":{
                 libraryMenuView.redirectLogout();
                 break;
             }

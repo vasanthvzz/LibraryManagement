@@ -1,6 +1,9 @@
 package com.vasanthvz.librarymanagement;
 
+import com.google.gson.Gson;
+import com.vasanthvz.librarymanagement.datalayer.LibraryDatabase;
 import com.vasanthvz.librarymanagement.login.LoginView;
+
 
 public class LibraryManagement {
     private static LibraryManagement libraryManagement;
@@ -31,6 +34,7 @@ public class LibraryManagement {
     }
 
     public static void main(String[] args) {
+        LibraryDatabase.getInstance().loadData();
         LibraryManagement.getInstance().create();
     }
 }

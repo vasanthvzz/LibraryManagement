@@ -1,6 +1,7 @@
 package com.vasanthvz.librarymanagement.librarymenu;
 
 import com.vasanthvz.librarymanagement.View;
+import com.vasanthvz.librarymanagement.datalayer.LibraryDatabase;
 import com.vasanthvz.librarymanagement.issuebook.IssueBookView;
 import com.vasanthvz.librarymanagement.login.LoginView;
 import com.vasanthvz.librarymanagement.managebook.ManageBookView;
@@ -16,12 +17,14 @@ public class LibraryMenuView extends View {
         showLibraryMenu();
     }
 
-    private void showLibraryMenu() {
+
+    void showLibraryMenu() {
         showText("""
                  1. Manage Book
                  2. Manage User
                  3. Manage IssueBook
-                 4. Logout
+                 4. Save data
+                 5. Logout
                  0. Exit
                 """);
         showText("Enter your choice : ");
@@ -31,6 +34,7 @@ public class LibraryMenuView extends View {
     }
 
     public void redirectLogout() {
+        LibraryDatabase.getInstance().saveData();
         new LoginView().init();
     }
 
