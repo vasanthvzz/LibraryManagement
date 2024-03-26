@@ -1,5 +1,6 @@
 package com.vasanthvz.librarymanagement.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserBook {
@@ -7,6 +8,9 @@ public class UserBook {
     private List<Book> books;
 
     public User getUser() {
+        if(user == null){
+            user = new User();
+        }
         return user;
     }
 
@@ -18,7 +22,11 @@ public class UserBook {
         return books;
     }
 
-    public void setBooks(List<Book> books) {
-        this.books = books;
+
+    public void addBook(Book book) {
+        if(books==null){
+            books = new ArrayList<>();
+        }
+        books.add(book);
     }
 }

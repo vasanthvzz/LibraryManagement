@@ -36,5 +36,6 @@ public class LibraryManagement {
     public static void main(String[] args) {
         LibraryDatabase.getInstance().loadData();
         LibraryManagement.getInstance().create();
+        LibraryDatabase.getInstance().saveData();
     }
 }

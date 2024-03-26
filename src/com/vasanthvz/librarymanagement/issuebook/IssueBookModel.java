@@ -4,6 +4,7 @@ import com.vasanthvz.librarymanagement.datalayer.LibraryDatabase;
 import com.vasanthvz.librarymanagement.librarymenu.LibraryMenuView;
 import com.vasanthvz.librarymanagement.model.Book;
 import com.vasanthvz.librarymanagement.model.User;
+import com.vasanthvz.librarymanagement.model.UserBook;
 
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ public class IssueBookModel {
     private LibraryDatabase libraryDatabase;
     IssueBookModel(IssueBookView issueBookView) {
         this.issueBookView = issueBookView;
+        libraryDatabase = LibraryDatabase.getInstance();
     }
 
     void redirectChoice(String choice) {
@@ -67,13 +69,16 @@ public class IssueBookModel {
     private void viewIssuedBooks() {
         issueBookView.showTitle("View Issued Books");
         issueBookView.showText("User id\t\tUserName\t\tBookId\t\tBookName");
-        for (Map.Entry<User, List<Book>> entry: LibraryDatabase.getInstance().getUserBookMap().entrySet()){
-            User user = entry.getKey();
-            List<Book> books = entry.getValue();
-            for(Book book : books){
-                issueBookView.showText(user.getId()+"\t\t"+
-                        user.getName()+"\t\t"+book.getId()+"\t\t"+
-                        book.getName());
+        if(libraryDatabase.getUserBookList()==null){
+            issueBookView.showMenu();
+            return;
+        }
+        for(UserBook userBook : libraryDatabase.getUserBookList()){
+            if(userBook.getBooks()==null){
+                continue;
+            }
+            for(Book book : userBook.getBooks()){
+                System.out.println(userBook.getUser().getId()+"\t\t"+userBook.getUser().getName()+"\t\t"+book.getId()+"\t\t"+book.getName());
             }
         }
         issueBookView.showMenu();

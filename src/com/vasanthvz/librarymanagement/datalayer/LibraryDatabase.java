@@ -1,29 +1,21 @@
 package com.vasanthvz.librarymanagement.datalayer;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.vasanthvz.librarymanagement.model.Book;
-import com.vasanthvz.librarymanagement.model.Library;
-import com.vasanthvz.librarymanagement.model.User;
-import com.vasanthvz.librarymanagement.model.UserBook;
+import com.vasanthvz.librarymanagement.model.*;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.Reader;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class LibraryDatabase {
     private static LibraryDatabase libraryDatabase;
     private static Gson gson;
-    private static int bookCounter = 1000;
-    private static int userCounter = 100;
+    private static Counter counter;
     private Library library;
     private static List<Book> bookList = new ArrayList<>();
     private static List<User> userList = new ArrayList<>();
-    private static HashMap<User,List<Book>> userBookMap;
+    private static List<UserBook> userBookList = new ArrayList<>();
     public static LibraryDatabase getInstance(){
         if(libraryDatabase == null){
             libraryDatabase = new LibraryDatabase();
@@ -31,9 +23,7 @@ public class LibraryDatabase {
         if(gson == null){
             gson = new Gson();
         }
-        if(userBookMap==null){
-            userBookMap = new HashMap<>();
-        }
+
         return libraryDatabase;
     }
     public Library getLibrary(){
@@ -47,14 +37,23 @@ public class LibraryDatabase {
         json = readData("users");
         listType = new TypeToken<List<User>>(){}.getType();
         userList = gson.fromJson(json,listType);
-        fromJson();
+        json = readData("bookUser");
+        Type list = new TypeToken<List<UserBook>>(){}.getType();
+        userBookList = gson.fromJson(json,list);
+        //fromJson();
+        nullcheck();
+        counter = readCountersFromFile();
+    }
 
+    private void nullcheck() {
+        if(bookList==null){bookList = new ArrayList<>();}
+        if(userList==null){userList=new ArrayList<>();};
+        if(userBookList==null){userBookList=new ArrayList<>();};
     }
 
     private String readData(String name){
         String json = "";
         try (Reader reader = new FileReader("data/"+name+".json")) {
-            // Create a buffer to read the file content
             StringBuilder stringBuilder = new StringBuilder();
             int c;
             while ((c = reader.read()) != -1) {
@@ -67,37 +66,19 @@ public class LibraryDatabase {
         return json;
     }
 
-    public String mapToJson() {
-        Gson gson = new Gson();
-        List<UserBook> userBooks = new ArrayList<>();
-        for (Map.Entry<User, List<Book>> entry : userBookMap.entrySet()) {
-            UserBook userBook = new UserBook();
-            userBook.setUser(entry.getKey());
-            userBook.setBooks(entry.getValue());
-            userBooks.add(userBook);
-        }
-        return gson.toJson(userBooks);
-    }
 
-    public void fromJson() {
-        String json = readData("bookUserMap");
-        Type type = new TypeToken<List<UserBook>>(){}.getType();
-        List<UserBook> userBooks = gson.fromJson(json, type);
-        if(userBooks==null){
-            return;
-        }
-        for (UserBook userBook : userBooks) {
-            userBookMap.put(userBook.getUser(), userBook.getBooks());
-        }
-    }
+
 
     public void saveData(){
         String json = gson.toJson(bookList);
         writeJson(json,"books");
         json = gson.toJson(userList);
         writeJson(json,"users");
-        json = mapToJson();
-        writeJson(json,"bookUserMap");
+        json = gson.toJson(userBookList);
+        writeJson(json,"bookUser");
+        json = gson.toJson(counter);
+        writeJson(json,"counters");
+        writeCountersToFile(counter);
     }
 
 
@@ -118,8 +99,8 @@ public class LibraryDatabase {
         return library;
     }
 
-    public HashMap<User, List<Book>> getUserBookMap() {
-        return userBookMap;
+    public List<UserBook> getUserBookList(){
+        return userBookList;
     }
 
     public List<Book> getAllBooks(){
@@ -136,25 +117,28 @@ public class LibraryDatabase {
 
 
 
+
     public boolean issueBookToUser(int userId,int bookId){
         User user = getUser(userId);
         Book book = getBook(bookId);
         if(book == null){
-        System.out.println("book not available");
-        return false;
+            System.out.println("book not available");
+            return false;
         }
         if(user == null){
             System.out.println("User not found");
             return false;
         }
-        if(userBookMap.containsKey(user)){
-            userBookMap.get(user).add(book);
-        }else{
-            List<Book> list = new ArrayList<>();
-            list.add(book);
-            userBookMap.put(user,list);
+        for(UserBook userBook : userBookList){
+            if(userBook.getUser().equals(user)){
+                userBook.addBook(book);
+                return true;
+            }
         }
-        book.decrementCount();
+        UserBook userBook = new UserBook();
+        userBook.setUser(user);
+        userBook.addBook(book);
+        userBookList.add(userBook);
         return true;
 
     }
@@ -170,6 +154,10 @@ public class LibraryDatabase {
 
     public boolean insertBook(Book book) {
         boolean hasBook = false;
+        if(bookList==null){
+            bookList.add(book);
+            return true;
+        }
         for (Book addedBook : bookList) {
             if (addedBook.getName().equals(book.getName()) && addedBook.getAuthor().equals(book.getAuthor())) {
                 hasBook = true;
@@ -185,8 +173,8 @@ public class LibraryDatabase {
         }
     }
     private int getBookCounter(){
-        bookCounter++;
-        return bookCounter;
+        counter.incrementBookCounter();
+        return counter.getBookCounter();
     }
     public List<User> getAllUser(){
         return userList;
@@ -228,9 +216,10 @@ public class LibraryDatabase {
     }
 
     private int getUserCounter(){
-        userCounter++;
-        return userCounter;
+        counter.incrementUserCounter();
+        return counter.getUserCounter();
     }
+
 
     public boolean returnBook(int userId, int bookId) {
         User user = getUser(userId);
@@ -244,15 +233,69 @@ public class LibraryDatabase {
             System.out.println("User not found");
             return false;
         }
-        if(userBookMap.containsKey(user)){
-            userBookMap.get(user).remove(book);
+        boolean hasBook = false;
+        List<Book>currentUserBook = getUserBookList(user);
+        if(currentUserBook == null){
+            System.out.println("User does not have any books");
         }else{
-            System.out.println("user not found");
-            return false;
+            if(currentUserBook.contains(book)){
+                currentUserBook.remove(book);
+                System.out.println("Book has been returned successfully");
+            }else {
+                System.out.println("book not found in user's section");
+            }
         }
-        book.incrementCount();
-        return true;
-
+        if(hasBook){
+            book.incrementCount();
+            return true;
+        }else{
+            System.out.println("Book not assigned to the user");
+        }
+        return false;
     }
+
+    public List<Book> getUserBookList(User user){
+        for(UserBook userBook : userBookList ){
+            if(user.getId() == userBook.getUser().getId()){
+                return userBook.getBooks();
+            }
+        }
+        return null;
+    }
+    public static Counter readCountersFromFile() {
+        try {
+            File file = new File("data/counters.json");
+            if (file.exists()) {
+                FileInputStream fis = new FileInputStream(file);
+                byte[] data = new byte[(int) file.length()];
+                fis.read(data);
+                fis.close();
+
+                String jsonString = new String(data);
+                Gson gson = new Gson();
+                return gson.fromJson(jsonString, Counter.class);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+        return new Counter(1000,100);
+    }
+    public static void writeCountersToFile(Counter counters) {
+        try {
+            File file = new File("data/counters.json"); // Replace with your desired file path
+            Gson gson = new Gson();
+            String jsonString = gson.toJson(counters);
+
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(jsonString.getBytes());
+            fos.close();
+        } catch (IOException e) {
+            // Handle exceptions gracefully (e.g., log the error)
+            e.printStackTrace();
+        }
+    }
+
+
 }
 

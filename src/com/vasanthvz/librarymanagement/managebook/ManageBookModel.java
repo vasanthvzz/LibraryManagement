@@ -67,6 +67,11 @@ public class ManageBookModel extends Model {
 
     private void viewAllBook() {
         manageBookView.showText("Name\t\tAuthor\t\tEdition\t\tCount");
+        if(libraryDatabase.getAllBooks()==null){
+            System.out.println("no book found");
+            manageBookView.showMenu();
+            return;
+        }
         for(Book book :libraryDatabase.getAllBooks()){
             manageBookView.showText(book.getId()+book.getName()+"\t\t"+
                     book.getAuthor()+ "\t\t"+book.getEdition()+"\t\t"
@@ -86,6 +91,7 @@ public class ManageBookModel extends Model {
         }else{
             manageBookView.showAlert("The book is already present !");
         }
+        manageBookView.showMenu();
     }
     void editBook(){
         int id =manageBookView.getBookId();
