@@ -78,7 +78,7 @@ public class LibraryDatabase {
         writeJson(json,"bookUser");
         json = gson.toJson(counter);
         writeJson(json,"counters");
-        writeCountersToFile(counter);
+        //writeCountersToFile(counter);
     }
 
 
@@ -281,20 +281,20 @@ public class LibraryDatabase {
         }
         return new Counter(1000,100);
     }
-    public static void writeCountersToFile(Counter counters) {
-        try {
-            File file = new File("data/counters.json"); // Replace with your desired file path
-            Gson gson = new Gson();
-            String jsonString = gson.toJson(counters);
-
-            FileOutputStream fos = new FileOutputStream(file);
-            fos.write(jsonString.getBytes());
-            fos.close();
-        } catch (IOException e) {
-            // Handle exceptions gracefully (e.g., log the error)
-            e.printStackTrace();
-        }
-    }
+//    public static void writeCountersToFile(Counter counters) {
+//        try {
+//            File file = new File("data/counters.json"); // Replace with your desired file path
+//            Gson gson = new Gson();
+//            String jsonString = gson.toJson(counters);
+//
+//            FileOutputStream fos = new FileOutputStream(file);
+//            fos.write(jsonString.getBytes());
+//            fos.close();
+//        } catch (IOException e) {
+//            // Handle exceptions gracefully (e.g., log the error)
+//            e.printStackTrace();
+//        }
+//    }
 
 
 }
