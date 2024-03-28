@@ -12,4 +12,4 @@ Library Management system is a console application, I have developed when i am l
 
 ## Output Screenshot
 
-(images/libmgmnt1.png)
+![SS1](images/libmgmnt1.png)
