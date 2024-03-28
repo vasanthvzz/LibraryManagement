@@ -7,7 +7,7 @@ Library Management system is a console application, I have developed when i am l
 
 ## Menu Control flow
 
-![Menu Flow](https://app.code2flow.com/pXWOcX.png)
+![Menu Flow](images/controlFlow.png)
 
 
 ## Output Screenshot
